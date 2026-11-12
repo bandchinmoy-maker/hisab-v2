@@ -1,0 +1,33 @@
+{
+  "name": "hisab-v2",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "postinstall": "prisma skills sync || exit 0",
+    "db:push": "npx prisma db push"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "autoprefixer": "^10.6.2",
+    "dotenv": "^18.0.9",
+    "next": "16.4.5",
+    "postcss": "^8.5.32",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@prisma/client": "^6.0.0",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "babel-plugin-react-compiler": "1.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.5",
+    "prisma": "^6.0.0",
+    "tailwindcss": "^4.3.4"
+  }
+}
