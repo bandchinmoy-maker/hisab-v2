@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react'
 
@@ -13,6 +13,78 @@ const ramayanaSlides = [
   { name: "Nala & Nila (नल और नीलकंठ)", title: "Divine Architects", deed: "Vishwakarma ke aashirwad aur gyan se samudra par mahan 'Ram Setu' ka nirmaan kiya jisse sena Lanka pahunchi.", symbol: "🌉", badge: "Master Engineers" }
 ];
 
+// Country list: [country, currency code, symbol, approximate rate to INR].
+// NOTE: rates are typed in by hand and are only approximate.
+const COUNTRY_ROWS = [
+  ["India", "INR", "₹", 1], ["Qatar", "QAR", "QR", 22.80], ["United States", "USD", "$", 86.50],
+  ["United Arab Emirates", "AED", "AED", 23.50], ["United Kingdom", "GBP", "£", 110.20],
+  ["Eurozone (Germany, France, Italy, etc.)", "EUR", "€", 92.40], ["Saudi Arabia", "SAR", "SR", 23.05],
+  ["Afghanistan", "AFN", "؋", 1.20], ["Albania", "ALL", "L", 0.92], ["Algeria", "DZD", "دج", 0.64],
+  ["Andorra", "EUR", "€", 92.40], ["Angola", "AOA", "Kz", 0.10], ["Argentina", "ARS", "$", 0.088],
+  ["Armenia", "AMD", "֏", 0.22], ["Australia", "AUD", "A$", 55.60], ["Austria", "EUR", "€", 92.40],
+  ["Azerbaijan", "AZN", "₼", 50.80], ["Bahamas", "BSD", "$", 86.50], ["Bahrain", "BHD", "BD", 229.30],
+  ["Barbados", "BBD", "$", 43.25], ["Belarus", "BYN", "Br", 26.50], ["Belgium", "EUR", "€", 92.40],
+  ["Belize", "BZD", "BZ$", 42.80], ["Benin", "XOF", "CFA", 0.14], ["Bhutan", "BTN", "Nu.", 1.00],
+  ["Bolivia", "BOB", "Bs.", 12.50], ["Bosnia and Herzegovina", "BAM", "KM", 47.20], ["Botswana", "BWP", "P", 6.40],
+  ["Brazil", "BRL", "R$", 14.80], ["Brunei", "BND", "B$", 65.40], ["Bulgaria", "BGN", "лв", 47.20],
+  ["Burkina Faso", "XOF", "CFA", 0.14], ["Burundi", "BIF", "FBu", 0.030], ["Cambodia", "KHR", "៛", 0.021],
+  ["Cameroon", "XAF", "FCFA", 0.14], ["Canada", "CAD", "C$", 61.20], ["Cape Verde", "CVE", "Esc", 0.84],
+  ["Central African Republic", "XAF", "FCFA", 0.14], ["Chad", "XAF", "FCFA", 0.14], ["Chile", "CLP", "$", 0.091],
+  ["China", "CNY", "¥", 11.90], ["Colombia", "COP", "$", 0.021], ["Comoros", "KMF", "CF", 0.19],
+  ["Congo (Democratic Republic)", "CDF", "FC", 0.030], ["Congo (Republic)", "XAF", "FCFA", 0.14],
+  ["Costa Rica", "CRC", "₡", 0.17], ["Croatia", "EUR", "€", 92.40], ["Cuba", "CUP", "$", 3.60],
+  ["Cyprus", "EUR", "€", 92.40], ["Czech Republic", "CZK", "Kč", 3.70], ["Denmark", "DKK", "kr", 12.35],
+  ["Djibouti", "DJF", "Fdj", 0.49], ["Dominica", "XCD", "EC$", 32.00], ["Dominican Republic", "DOP", "RD$", 1.45],
+  ["Ecuador", "USD", "$", 86.50], ["Egypt", "EGP", "E£", 1.78], ["El Salvador", "USD", "$", 86.50],
+  ["Equatorial Guinea", "XAF", "FCFA", 0.14], ["Eritrea", "ERN", "Nfk", 5.76], ["Estonia", "EUR", "€", 92.40],
+  ["Eswatini", "SZL", "L", 4.75], ["Ethiopia", "ETB", "Br", 0.74], ["Fiji", "FJD", "FJ$", 38.50],
+  ["Finland", "EUR", "€", 92.40], ["France", "EUR", "€", 92.40], ["Gabon", "XAF", "FCFA", 0.14],
+  ["Gambia", "GMD", "D", 1.25], ["Georgia", "GEL", "₾", 31.80], ["Germany", "EUR", "€", 92.40],
+  ["Ghana", "GHS", "GH₵", 5.80], ["Greece", "EUR", "€", 92.40], ["Grenada", "XCD", "EC$", 32.00],
+  ["Guatemala", "GTQ", "Q", 11.20], ["Guinea", "GNF", "FG", 0.010], ["Guinea-Bissau", "XOF", "CFA", 0.14],
+  ["Guyana", "GYD", "G$", 0.41], ["Haiti", "HTG", "G", 0.65], ["Honduras", "HNL", "L", 3.50],
+  ["Hungary", "HUF", "Ft", 0.23], ["Iceland", "ISK", "kr", 0.62], ["Indonesia", "IDR", "Rp", 0.0054],
+  ["Iran", "IRR", "﷼", 0.0020], ["Iraq", "IQD", "ع.د", 0.066], ["Ireland", "EUR", "€", 92.40],
+  ["Israel", "ILS", "₪", 23.40], ["Italy", "EUR", "€", 92.40], ["Jamaica", "JMD", "J$", 0.55],
+  ["Japan", "JPY", "¥", 0.56], ["Jordan", "JOD", "JD", 122.00], ["Kazakhstan", "KZT", "₸", 0.17],
+  ["Kenya", "KES", "KSh", 0.67], ["Kiribati", "AUD", "A$", 55.60], ["Korea (North)", "KPW", "₩", 0.96],
+  ["Korea (South)", "KRW", "₩", 0.061], ["Kuwait", "KWD", "KD", 281.50], ["Kyrgyzstan", "KGS", "с", 0.98],
+  ["Laos", "LAK", "₭", 0.0040], ["Latvia", "EUR", "€", 92.40], ["Lebanon", "LBP", "ل.ل", 0.00096],
+  ["Lesotho", "LSL", "L", 4.75], ["Liberia", "LRD", "L$", 0.44], ["Libya", "LYD", "LD", 17.80],
+  ["Liechtenstein", "CHF", "CHF", 98.20], ["Lithuania", "EUR", "€", 92.40], ["Luxembourg", "EUR", "€", 92.40],
+  ["Madagascar", "MGA", "Ar", 0.019], ["Malawi", "MWK", "MK", 0.050], ["Malaysia", "MYR", "RM", 19.40],
+  ["Maldives", "MVR", "Rf", 5.60], ["Mali", "XOF", "CFA", 0.14], ["Malta", "EUR", "€", 92.40],
+  ["Marshall Islands", "USD", "$", 86.50], ["Mauritania", "MRU", "UM", 2.20], ["Mauritius", "MUR", "₨", 1.88],
+  ["Mexico", "MXN", "$", 4.30], ["Micronesia", "USD", "$", 86.50], ["Moldova", "MDL", "L", 4.80],
+  ["Monaco", "EUR", "€", 92.40], ["Mongolia", "MNT", "₮", 0.025], ["Montenegro", "EUR", "€", 92.40],
+  ["Morocco", "MAD", "DH", 8.60], ["Mozambique", "MZN", "MT", 1.35], ["Myanmar", "MMK", "K", 0.041],
+  ["Namibia", "NAD", "$", 4.75], ["Nauru", "AUD", "A$", 55.60], ["Nepal", "NPR", "रू", 0.62],
+  ["Netherlands", "EUR", "€", 92.40], ["New Zealand", "NZD", "NZ$", 51.20], ["Nicaragua", "NIO", "C$", 2.35],
+  ["Niger", "XOF", "CFA", 0.14], ["Nigeria", "NGN", "₦", 0.055], ["North Macedonia", "MKD", "ден", 1.50],
+  ["Norway", "NOK", "kr", 7.90], ["Oman", "OMR", "OMR", 224.80], ["Palau", "USD", "$", 86.50],
+  ["Panama", "PAB", "B/.", 86.50], ["Papua New Guinea", "PGK", "K", 22.10], ["Paraguay", "PYG", "₲", 0.011],
+  ["Peru", "PEN", "S/.", 23.20], ["Philippines", "PHP", "₱", 1.48], ["Poland", "PLN", "zł", 21.50],
+  ["Portugal", "EUR", "€", 92.40], ["Romania", "RON", "lei", 18.50], ["Russia", "RUB", "₽", 0.92],
+  ["Rwanda", "RWF", "FRw", 0.064], ["Saint Kitts and Nevis", "XCD", "EC$", 32.00], ["Saint Lucia", "XCD", "EC$", 32.00],
+  ["Saint Vincent and the Grenadines", "XCD", "EC$", 32.00], ["Samoa", "WST", "T", 31.50], ["San Marino", "EUR", "€", 92.40],
+  ["Sao Tome and Principe", "STN", "Db", 3.75], ["Senegal", "XOF", "CFA", 0.14], ["Serbia", "RSD", "дин", 0.79],
+  ["Seychelles", "SCR", "SR", 6.30], ["Sierra Leone", "SLL", "Le", 0.0039], ["Singapore", "SGD", "S$", 65.40],
+  ["Slovakia", "EUR", "€", 92.40], ["Slovenia", "EUR", "€", 92.40], ["Solomon Islands", "SBD", "SI$", 10.20],
+  ["Somalia", "SOS", "Sh.so", 0.15], ["South Africa", "ZAR", "R", 4.75], ["South Sudan", "SSP", "£", 0.066],
+  ["Spain", "EUR", "€", 92.40], ["Sri Lanka", "LKR", "Rs", 0.29], ["Sudan", "SDG", "SD", 0.14],
+  ["Suriname", "SRD", "$", 2.30], ["Sweden", "SEK", "kr", 8.10], ["Switzerland", "CHF", "CHF", 98.20],
+  ["Syria", "SYP", "£", 0.034], ["Taiwan", "TWD", "NT$", 2.65], ["Tajikistan", "TJS", "SM", 7.90],
+  ["Tanzania", "TZS", "TSh", 0.033], ["Thailand", "THB", "฿", 2.50], ["Timor-Leste", "USD", "$", 86.50],
+  ["Togo", "XOF", "CFA", 0.14], ["Tonga", "TOP", "T$", 36.50], ["Trinidad and Tobago", "TTD", "TT$", 12.70],
+  ["Tunisia", "TND", "د.ت", 27.50], ["Turkey", "TRY", "₺", 2.50], ["Turkmenistan", "TMT", "m", 24.70],
+  ["Tuvalu", "AUD", "A$", 55.60], ["Uganda", "UGX", "USh", 0.023], ["Ukraine", "UAH", "₴", 2.10],
+  ["Uruguay", "UYU", "$U", 2.15], ["Uzbekistan", "UZS", "so'm", 0.0068], ["Vanuatu", "VUV", "VT", 0.72],
+  ["Vatican City", "EUR", "€", 92.40], ["Venezuela", "VES", "Bs.", 2.35], ["Vietnam", "VND", "₫", 0.0034],
+  ["Yemen", "YER", "﷼", 0.35], ["Zambia", "ZMW", "ZK", 3.20], ["Zimbabwe", "ZWL", "Z$", 0.27]
+];
+
+const GLOBAL_COUNTRIES = COUNTRY_ROWS.map(([country, currency, symbol, rateToINR]) => ({ country, currency, symbol, rateToINR }));
+
 const TABS = ['Overview', 'Transactions', 'To collect', 'Reports', 'Bank Accounts', 'Business setup'];
 const ICONS = { 'Overview': '📊', 'Transactions': '📜', 'To collect': '📥', 'Reports': '📈', 'Bank Accounts': '🏦', 'Business setup': '⚙️' };
 
@@ -20,7 +92,10 @@ const screenCls = 'min-h-screen bg-[#120f0c] flex items-center justify-center p-
 const inputCls = 'w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white';
 const labelCls = 'block text-xs font-bold text-slate-700 uppercase mb-1';
 const primaryBtn = 'w-full py-3.5 bg-amber-800 hover:bg-amber-900 text-white font-bold text-sm rounded-xl shadow-md transition cursor-pointer';
-const emptyTx = { text: '', amount: '', type: 'income', category: 'General', paymentMode: 'Cash', bankAccount: 'Main Cash Drawer' };
+const emptyTx = { text: '', amount: '', type: 'income', category: 'General', paymentMode: 'Cash', bankAccount: 'Main Cash Drawer', country: 'India', currency: 'INR', symbol: '₹' };
+
+// Amount of a transaction in rupees (old entries without amountINR are treated as rupees)
+const inr = (t) => t.amountINR ?? t.amount;
 
 const AnimStyles = () => (
   <style>{`
@@ -67,9 +142,13 @@ export default function HisabApp() {
   const [isListening, setIsListening] = useState(false);
   const [detectedSms, setDetectedSms] = useState('');
 
-  // Audio Player States
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef(null);
+
+  // Live exchange rates (units of each currency per 1 INR). Falls back to the typed-in rates if offline.
+  const [liveRates, setLiveRates] = useState(null);
+  const [ratesDate, setRatesDate] = useState('');
+  const getRate = (c) => (liveRates && liveRates[c.currency] ? 1 / liveRates[c.currency] : c.rateToINR);
 
   const toggleMusic = () => {
     if (!audioRef.current) return;
@@ -81,13 +160,13 @@ export default function HisabApp() {
         setIsPlaying(true);
       }).catch(err => {
         console.error("Audio playback failed:", err);
-        alert("Please place your audio file in public folder or check audio source.");
+        alert("Music file not found. Please put music.mp3 inside your project's public folder.");
       });
     }
   };
 
   const saveDues = (list) => { setDues(list); localStorage.setItem('arthved_dues', JSON.stringify(list)); };
-  
+
   const addDue = (e) => {
     e.preventDefault();
     if (!dueForm.party || !dueForm.amount) return;
@@ -96,7 +175,7 @@ export default function HisabApp() {
   };
 
   const receiveDue = (due) => {
-    const newTx = { id: Date.now(), text: `Received from ${due.party}`, amount: due.amount, type: 'income', category: 'Udhaar Wapasi', paymentMode: 'Cash', bankAccount: 'Main Cash Drawer', date: new Date().toLocaleDateString() };
+    const newTx = { id: Date.now(), text: `Received from ${due.party}`, amount: due.amount, amountINR: due.amount, type: 'income', category: 'Udhaar Wapasi', paymentMode: 'Cash', bankAccount: bankAccounts[0]?.name || 'Main Cash Drawer', country: 'India', currency: 'INR', symbol: '₹', date: new Date().toLocaleDateString() };
     const updated = [newTx, ...transactions];
     setTransactions(updated);
     localStorage.setItem('arthved_tx', JSON.stringify(updated));
@@ -140,11 +219,13 @@ export default function HisabApp() {
     recognition.onerror = () => setIsListening(false);
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
-      const numberMatch = transcript.match(/\d+/);
-      const amount = numberMatch ? numberMatch[0] : '';
-      const text = transcript.replace(/\d+/g, '').trim();
-      const isExpense = transcript.toLowerCase().includes('kharcha') || transcript.toLowerCase().includes('paid') || transcript.toLowerCase().includes('diya');
-      
+      const numberMatch = transcript.match(/\d[\d,]*(?:\.\d+)?/);
+      const amount = numberMatch ? numberMatch[0].replace(/,/g, '') : '';
+      const text = transcript.replace(/\d[\d,]*(?:\.\d+)?/g, '').trim();
+      const lower = transcript.toLowerCase();
+      // Works for both English-letter and Devanagari speech results
+      const isExpense = ['kharcha', 'kharch', 'paid', 'diya', 'खर्च', 'खर्चा', 'दिया', 'दिए'].some((w) => lower.includes(w));
+
       setTxData(prev => ({
         ...prev,
         text: text || prev.text,
@@ -166,10 +247,12 @@ export default function HisabApp() {
         alert("Clipboard is empty.");
         return;
       }
-      const numMatch = text.match(/(?:Rs\.?|INR|₹)\s*(\d+)/i) || text.match(/\b\d+\b/);
-      const amount = numMatch ? (numMatch[1] || numMatch[0]) : '';
-      const isExpense = text.toLowerCase().includes('debited') || text.toLowerCase().includes('paid') || text.toLowerCase().includes('sent');
-      
+      // Reads amounts like "Rs 1,500.00", "INR 250", "₹99"
+      const numMatch = text.match(/(?:Rs\.?|INR|₹)\s*([\d,]+(?:\.\d+)?)/i);
+      const amount = numMatch ? numMatch[1].replace(/,/g, '') : '';
+      const lower = text.toLowerCase();
+      const isExpense = lower.includes('debited') || lower.includes('paid') || lower.includes('sent');
+
       setDetectedSms(text);
       setTxData(prev => ({
         ...prev,
@@ -185,17 +268,51 @@ export default function HisabApp() {
   };
 
   const downloadCSV = () => {
-    const rows = [['Date', 'Description', 'Category', 'Payment Mode', 'Bank Account', 'Type', 'Amount'], ...transactions.map((t) => [t.date, t.text, t.category, t.paymentMode, t.bankAccount || 'Main Cash Drawer', t.type, t.amount])];
+    const rows = [['Date', 'Description', 'Category', 'Payment Mode', 'Bank Account', 'Country', 'Currency', 'Type', 'Amount', 'Amount in INR'], ...transactions.map((t) => [t.date, t.text, t.category, t.paymentMode, t.bankAccount || 'Main Cash Drawer', t.country || 'India', t.currency || 'INR', t.type, t.amount, inr(t)])];
     const csv = rows.map((r) => r.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    // The \uFEFF makes Hindi text show correctly in Excel
+    a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
     a.download = 'arthved-report.csv';
     a.click();
   };
 
   const totalDue = dues.reduce((a, d) => a + d.amount, 0);
-  const byCategory = Object.entries(transactions.filter((t) => t.type === 'expense').reduce((m, t) => { const k = t.category || 'General'; m[k] = (m[k] || 0) + t.amount; return m; }, {})).sort((a, b) => b[1] - a[1]);
-  const byMode = Object.entries(transactions.reduce((m, t) => { const k = t.paymentMode || 'Cash'; m[k] = (m[k] || 0) + t.amount; return m; }, {}));
+  const byCategory = Object.entries(transactions.filter((t) => t.type === 'expense').reduce((m, t) => { const k = t.category || 'General'; m[k] = (m[k] || 0) + inr(t); return m; }, {})).sort((a, b) => b[1] - a[1]);
+  const byMode = Object.entries(transactions.reduce((m, t) => { const k = t.paymentMode || 'Cash'; m[k] = (m[k] || 0) + inr(t); return m; }, {}));
+
+  // Fetch daily exchange rates (cached for 12 hours)
+  useEffect(() => {
+    const loadRates = async () => {
+      try {
+        const cached = JSON.parse(localStorage.getItem('arthved_rates') || 'null');
+        if (cached && Date.now() - cached.time < 12 * 60 * 60 * 1000) {
+          setLiveRates(cached.rates);
+          setRatesDate(cached.updated);
+          return;
+        }
+        const res = await fetch('https://open.er-api.com/v6/latest/INR');
+        const data = await res.json();
+        if (data.result === 'success' && data.rates) {
+          const updated = (data.time_last_update_utc || '').slice(0, 16);
+          localStorage.setItem('arthved_rates', JSON.stringify({ time: Date.now(), rates: data.rates, updated }));
+          setLiveRates(data.rates);
+          setRatesDate(updated);
+        }
+      } catch (err) {
+        console.error('Could not load exchange rates, using saved approximate rates', err);
+      }
+    };
+    loadRates();
+  }, []);
+
+  // Music player lives here so it keeps playing when the screen changes
+  useEffect(() => {
+    const a = new Audio('/music.mp3');
+    a.loop = true;
+    audioRef.current = a;
+    return () => a.pause();
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -260,6 +377,7 @@ export default function HisabApp() {
     setTransactions([]);
     setDues([]);
     setBiz({ name: '', owner: '', gstin: '', phone: '', address: '' });
+    setBankAccounts([{ id: 1, name: 'Main Cash Drawer', type: 'Cash', accountNo: 'Cash' }]);
     setStep('welcome');
   };
 
@@ -267,40 +385,44 @@ export default function HisabApp() {
     e.preventDefault();
     if (!txData.text || !txData.amount) return;
     const amountVal = parseFloat(txData.amount);
-    const newTx = {
-      id: Date.now(),
-      ...txData,
-      amount: amountVal,
-      date: new Date().toLocaleDateString()
-    };
-    const updated = [newTx, ...transactions];
-    setTransactions(updated);
-    localStorage.setItem('arthved_tx', JSON.stringify(updated));
+    const countryObj = GLOBAL_COUNTRIES.find(c => c.country === (txData.country || 'India')) || GLOBAL_COUNTRIES[0];
+    const amountINR = Math.round(amountVal * getRate(countryObj) * 100) / 100;
+    const bankAccount = bankAccounts.some(b => b.name === txData.bankAccount) ? txData.bankAccount : (bankAccounts[0]?.name || 'Main Cash Drawer');
 
     if (txData.paymentMode === 'Credit Sales') {
-      const newDue = {
-        id: Date.now() + 1,
-        party: txData.text,
+      // A credit sale is not income yet. It goes to "To collect" and becomes income when you press "Mila".
+      saveDues([{ id: Date.now(), party: txData.text, amount: amountINR, dueDate: '' }, ...dues]);
+    } else {
+      const newTx = {
+        id: Date.now(),
+        ...txData,
+        bankAccount,
         amount: amountVal,
-        dueDate: ''
+        amountINR,
+        country: countryObj.country,
+        currency: countryObj.currency,
+        symbol: countryObj.symbol,
+        date: new Date().toLocaleDateString()
       };
-      saveDues([newDue, ...dues]);
+      const updated = [newTx, ...transactions];
+      setTransactions(updated);
+      localStorage.setItem('arthved_tx', JSON.stringify(updated));
     }
 
     setIsModalOpen(false);
-    setTxData(emptyTx);
+    // Keep the chosen country for the next entry
+    setTxData({ ...emptyTx, country: countryObj.country, currency: countryObj.currency, symbol: countryObj.symbol });
     setDetectedSms('');
   };
 
-  const totalIncome = transactions.filter(t => t.type === 'income').reduce((a, c) => a + c.amount, 0);
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((a, c) => a + c.amount, 0);
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((a, c) => a + inr(c), 0);
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((a, c) => a + inr(c), 0);
   const netBalance = totalIncome - totalExpense;
 
   if (step === 'loading') {
     return (
       <div className="min-h-screen bg-[#120f0c] flex flex-col items-center justify-center font-sans text-amber-100 overflow-hidden relative">
         <AnimStyles />
-        <audio ref={audioRef} src="/music.mp3" loop />
         <div className="relative mb-8">
           <div className="av-ring absolute -inset-6 rounded-full border-2 border-dashed border-amber-500/40"></div>
           <div className="av-glow w-28 h-28 bg-gradient-to-tr from-amber-600 to-amber-400 rounded-full flex items-center justify-center text-5xl border border-amber-300/40">
@@ -330,7 +452,7 @@ export default function HisabApp() {
   if (step === 'welcome') {
     return (
       <div className={screenCls + " relative"}>
-        <audio ref={audioRef} src="/music.mp3" loop />
+        <AnimStyles />
         <div className="bg-white/95 backdrop-blur-md p-8 rounded-3xl shadow-2xl max-w-md w-full border border-amber-300/40 text-center">
           <div className="w-16 h-16 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
             <svg width="36" height="36" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -358,7 +480,7 @@ export default function HisabApp() {
   if (step === 'register') {
     return (
       <div className={screenCls + " relative"}>
-        <audio ref={audioRef} src="/music.mp3" loop />
+        <AnimStyles />
         <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full border border-amber-200">
           <h2 className="text-xl font-black text-amber-900 mb-1">Create Your Vault</h2>
           <p className="text-xs text-slate-500 mb-6">Set your name and a PIN to protect your accounts on this device.</p>
@@ -389,7 +511,7 @@ export default function HisabApp() {
   if (step === 'login') {
     return (
       <div className={screenCls + " relative"}>
-        <audio ref={audioRef} src="/music.mp3" loop />
+        <AnimStyles />
         <div className="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full border border-amber-200 text-center">
           <div className="w-12 h-12 bg-amber-100 text-amber-800 rounded-2xl flex items-center justify-center mx-auto mb-3 text-xl">🔒</div>
           <h2 className="text-2xl font-black text-slate-900 mb-1">Unlock ArthVed Vault</h2>
@@ -422,7 +544,12 @@ export default function HisabApp() {
 
   const txTable = (
     <div className="bg-white rounded-2xl border border-amber-200 shadow-sm p-6 mb-12">
-      <h2 className="text-xl font-bold text-amber-900 mb-4 flex items-center gap-2"><span>📜</span> Karma Lekha (Transactions)</h2>
+      <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
+        <h2 className="text-xl font-bold text-amber-900 flex items-center gap-2"><span>📜</span> Karma Lekha (Transactions)</h2>
+        <span className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-lg font-bold">
+          Multi-Currency Ledger 🌐
+        </span>
+      </div>
       {transactions.length === 0 ? (
         <p className="text-sm text-slate-500 py-8 text-center">Abhi tak koi bhi len-den darj nahi kiya gaya hai.</p>
       ) : (
@@ -432,6 +559,7 @@ export default function HisabApp() {
               <tr className="border-b border-amber-100 text-xs text-amber-900 uppercase">
                 <th className="py-3 px-4">Date</th>
                 <th className="py-3 px-4">Vivaran (Description)</th>
+                <th className="py-3 px-4">Country / Currency</th>
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Payment Mode</th>
                 <th className="py-3 px-4">Account Tag</th>
@@ -443,11 +571,16 @@ export default function HisabApp() {
                 <tr key={tx.id} className="hover:bg-amber-50/50">
                   <td className="py-3 px-4 text-slate-500">{tx.date}</td>
                   <td className="py-3 px-4 font-semibold text-slate-800">{tx.text}</td>
+                  <td className="py-3 px-4">
+                    <span className="bg-slate-100 text-slate-700 text-xs px-2 py-1 rounded font-bold">
+                      {tx.country || 'India'} ({tx.currency || 'INR'})
+                    </span>
+                  </td>
                   <td className="py-3 px-4 text-slate-600">{tx.category || 'General'}</td>
                   <td className="py-3 px-4"><span className="bg-amber-100 text-amber-900 text-xs px-2 py-1 rounded-md font-bold">{tx.paymentMode || 'Cash'}</span></td>
                   <td className="py-3 px-4"><span className="bg-slate-100 text-slate-800 text-xs px-2 py-1 rounded-md font-medium">🏦 {tx.bankAccount || 'Main Cash Drawer'}</span></td>
                   <td className={`py-3 px-4 font-bold ${tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                    {tx.type === 'income' ? '+' : '-'} ₹ {Math.abs(tx.amount).toLocaleString()}
+                    {tx.type === 'income' ? '+' : '-'} {tx.symbol || '₹'} {Math.abs(tx.amount).toLocaleString()}
                   </td>
                 </tr>
               ))}
@@ -461,8 +594,7 @@ export default function HisabApp() {
   return (
     <div className="min-h-screen bg-[#fefcf6] text-slate-800 flex font-sans">
       <AnimStyles />
-      <audio ref={audioRef} src="/music.mp3" loop />
-      
+
       <aside className="w-64 bg-white border-r border-amber-200 hidden md:flex flex-col justify-between p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-3 mb-8 pb-4 border-b border-amber-100">
@@ -492,12 +624,22 @@ export default function HisabApp() {
           </nav>
         </div>
 
-        {/* Empty Space Music Widget & Creator Signature Integration */}
         <div className="pt-4 border-t border-amber-100 space-y-3">
+          <div className="bg-amber-900 text-amber-100 p-2.5 rounded-xl text-[10px] shadow-inner space-y-1 border border-amber-700">
+            <div className="flex items-center justify-between font-bold text-amber-300">
+              <span>🌐 {liveRates ? 'Daily Rates' : 'Approx. Rates'} (vs INR)</span>
+            </div>
+            <div className="flex justify-between text-slate-200">
+              <span>1 USD ≈ ₹{getRate(GLOBAL_COUNTRIES.find((c) => c.currency === 'USD')).toFixed(2)}</span>
+              <span>1 QAR ≈ ₹{getRate(GLOBAL_COUNTRIES.find((c) => c.currency === 'QAR')).toFixed(2)}</span>
+            </div>
+            <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="block text-[9px] text-amber-300/80 underline">Rates By Exchange Rate API{ratesDate ? ` • ${ratesDate}` : ''}</a>
+          </div>
+
           <div className="bg-amber-50 border border-amber-200/60 p-3 rounded-2xl text-center shadow-inner">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-bold text-amber-900 uppercase">🎵 Divine Dhun</span>
-              <button 
+              <button
                 onClick={toggleMusic}
                 className="bg-amber-800 hover:bg-amber-900 text-white text-xs px-3 py-1 rounded-lg font-bold shadow transition cursor-pointer"
               >
@@ -505,7 +647,7 @@ export default function HisabApp() {
               </button>
             </div>
             <p className="text-[10px] text-slate-600 font-medium leading-tight">
-              Music by <span className="font-bold text-amber-900">Kalpesh Ajugia</span> from <span className="font-bold text-amber-900">Pixabay</span>[cite: 5]
+              Music by <span className="font-bold text-amber-900">Kalpesh Ajugia</span> from <span className="font-bold text-amber-900">Pixabay</span>
             </p>
           </div>
 
@@ -529,6 +671,7 @@ export default function HisabApp() {
             <button onClick={() => setIsModalOpen(true)} className="bg-amber-800 hover:bg-amber-900 text-amber-50 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition flex items-center gap-2 cursor-pointer">
               <span>➕</span> Add Sale / Expense
             </button>
+            <button onClick={toggleMusic} className="md:hidden bg-amber-100 text-amber-900 px-3 py-2.5 rounded-xl font-bold text-sm cursor-pointer">{isPlaying ? '⏸' : '🎵'}</button>
             <button onClick={handleLock} className="md:hidden bg-slate-100 text-slate-700 px-3 py-2.5 rounded-xl font-bold text-sm cursor-pointer">🔒</button>
           </div>
         </header>
@@ -547,7 +690,7 @@ export default function HisabApp() {
 
         {activeTab === 'Overview' && (
           <div className="relative w-full rounded-3xl overflow-hidden shadow-xl border border-amber-300 mb-8 bg-slate-900 text-white min-h-[320px] flex items-center">
-            <div key={"bg"+currentSlide} className="av-pop absolute inset-y-0 right-0 pr-8 flex items-center text-[13rem] opacity-10 select-none pointer-events-none">{slide.symbol}</div>
+            <div key={"bg" + currentSlide} className="av-pop absolute inset-y-0 right-0 pr-8 flex items-center text-[13rem] opacity-10 select-none pointer-events-none">{slide.symbol}</div>
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-transparent"></div>
             <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row items-center gap-6 w-full">
               <div key={currentSlide} className="av-pop w-28 h-28 md:w-36 md:h-36 rounded-2xl border-2 border-amber-400/80 shadow-2xl flex-shrink-0 bg-gradient-to-br from-amber-800 to-amber-950 flex items-center justify-center text-6xl md:text-7xl">{slide.symbol}</div>
@@ -575,6 +718,7 @@ export default function HisabApp() {
               <div className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Net Balance (Kosh)</p>
                 <h3 className={`text-2xl font-black mt-2 ${netBalance >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>₹ {netBalance.toLocaleString()}</h3>
+                <p className="text-[10px] text-slate-400 mt-1">*All currencies converted to ₹ (approx.)</p>
               </div>
               <div className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Aagman (Total Income)</p>
@@ -636,7 +780,7 @@ export default function HisabApp() {
             <div className="bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
               <h2 className="text-xl font-bold text-amber-900 mb-1">🏦 Bank & Online Accounts Management</h2>
               <p className="text-xs text-slate-500 mb-4">Add your personal bank accounts or UPI IDs here so you can tag your transactions accurately.</p>
-              
+
               <form onSubmit={handleAddBank} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end mb-6">
                 <div><label className={labelCls}>Account Name</label><input type="text" required placeholder="Jaise: SBI Current, Paytm" value={bankForm.name} onChange={(e) => setBankForm({ ...bankForm, name: e.target.value })} className={inputCls} /></div>
                 <div><label className={labelCls}>Account No / UPI ID</label><input type="text" placeholder="**** 1234 / UPI" value={bankForm.accountNo} onChange={(e) => setBankForm({ ...bankForm, accountNo: e.target.value })} className={inputCls} /></div>
@@ -650,7 +794,7 @@ export default function HisabApp() {
                       <p className="font-bold text-slate-800">{acc.name}</p>
                       <p className="text-xs text-slate-500">{acc.accountNo || 'Secure Vault Tag'}</p>
                     </div>
-                    {bankAccounts.length > 1 && (
+                    {acc.id !== 1 && (
                       <button onClick={() => deleteBank(acc.id)} className="text-rose-500 text-xs font-bold hover:underline cursor-pointer">Remove</button>
                     )}
                   </div>
@@ -713,7 +857,7 @@ export default function HisabApp() {
             <div><label className={labelCls}>Address</label><textarea rows={3} value={biz.address} onChange={(e) => setBiz({ ...biz, address: e.target.value })} className={inputCls}></textarea></div>
             <button type="submit" className={primaryBtn}>Surakshit Karein 💾</button>
             {bizSaved && <p className="text-sm text-emerald-600 font-bold text-center">✔ Saved on this device!</p>}
-            
+
             <div className="pt-4 border-t border-amber-100 text-center text-amber-900/60 text-sm signature-font">
               Chinmoy Suryakant Band
             </div>
@@ -727,17 +871,17 @@ export default function HisabApp() {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-200">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-amber-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4 pb-2 border-b border-amber-100">
-              <h3 className="text-lg font-bold text-amber-900">Naya Karma Lekha Jodein</h3>
+              <h3 className="text-lg font-bold text-amber-900">Add Transaction</h3>
               <button type="button" onClick={() => { setIsModalOpen(false); setDetectedSms(''); }} className="text-slate-400 hover:text-rose-600 text-xl font-bold p-1 rounded-lg hover:bg-rose-50 transition-colors cursor-pointer">✕</button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-2xl flex flex-col justify-between">
                 <p className="text-[11px] font-bold text-amber-900 mb-1">🎙️ Voice Ledger</p>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={startVoiceRecognition}
                   className={`w-full py-1.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer shadow transition ${isListening ? 'bg-rose-600 text-white animate-pulse' : 'bg-amber-800 text-white hover:bg-amber-900'}`}
                 >
@@ -747,8 +891,8 @@ export default function HisabApp() {
 
               <div className="bg-amber-50 border border-amber-200 p-2.5 rounded-2xl flex flex-col justify-between">
                 <p className="text-[11px] font-bold text-amber-900 mb-1">📋 SMS Auto-Paste</p>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={checkClipboardForSMS}
                   className="w-full py-1.5 bg-amber-800 hover:bg-amber-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1 cursor-pointer shadow transition"
                 >
@@ -764,20 +908,65 @@ export default function HisabApp() {
             )}
 
             <form onSubmit={handleAddTransaction} className="space-y-4">
+
               <div>
-                <label className={labelCls}>Vivaran (Description)</label>
+                <label className={labelCls}>Select Country (Auto-detects Currency)</label>
+                <select
+                  value={txData.country || 'India'}
+                  onChange={(e) => {
+                    const selectedC = GLOBAL_COUNTRIES.find(c => c.country === e.target.value);
+                    setTxData({
+                      ...txData,
+                      country: e.target.value,
+                      currency: selectedC ? selectedC.currency : 'INR',
+                      symbol: selectedC ? selectedC.symbol : '₹'
+                    });
+                  }}
+                  className={inputCls}
+                >
+                  {GLOBAL_COUNTRIES.map((c) => (
+                    <option key={c.country} value={c.country}>
+                      {c.country} ({c.currency} - {c.symbol})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-amber-700 mt-1 font-medium">
+                  ℹ️ Saved in {txData.currency || 'INR'}. 1 {txData.currency || 'INR'} ≈ ₹{getRate(GLOBAL_COUNTRIES.find((x) => x.country === txData.country) || GLOBAL_COUNTRIES[0]).toFixed(4)} {liveRates ? '(daily rate)' : '(approximate)'} — used for your ₹ totals.
+                </p>
+              </div>
+
+              <div>
+                <label className={labelCls}>Description</label>
                 <input type="text" required placeholder="Jaise: Yajna Samagri, Seva daan..." value={txData.text} onChange={(e) => setTxData({ ...txData, text: e.target.value })} className={inputCls} />
               </div>
+
               <div>
-                <label className={labelCls}>Rashi (Amount in ₹)</label>
-                <input type="number" required min="0" step="0.01" placeholder="0.00" value={txData.amount} onChange={(e) => setTxData({ ...txData, amount: e.target.value })} className={inputCls} />
+                <label className={labelCls}>
+                  Amount (in {txData.currency || 'INR'} [{txData.symbol || '₹'}])
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-amber-800 font-extrabold text-sm select-none">
+                    {txData.symbol || '₹'}
+                  </span>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={txData.amount}
+                    onChange={(e) => setTxData({ ...txData, amount: e.target.value })}
+                    className={inputCls + ' pl-14 font-bold text-slate-900'}
+                  />
+                </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Prakar (Type)</label>
+                  <label className={labelCls}>Type</label>
                   <select value={txData.type} onChange={(e) => setTxData({ ...txData, type: e.target.value })} className={inputCls}>
-                    <option value="income">Aagman (Income)</option>
-                    <option value="expense">Vyaya (Expense)</option>
+                    <option value="income">Income (Aagman)</option>
+                    <option value="expense">Expense (Vyaya)</option>
                   </select>
                 </div>
                 <div>
@@ -790,9 +979,16 @@ export default function HisabApp() {
                   </select>
                 </div>
               </div>
+
+              {txData.paymentMode === 'Credit Sales' && (
+                <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-2">
+                  Credit sale goes to the "To collect" tab (in ₹). It becomes income when you press ✔ Mila.
+                </p>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Bank / AccountTag</label>
+                  <label className={labelCls}>Bank / Account Tag</label>
                   <select value={txData.bankAccount} onChange={(e) => setTxData({ ...txData, bankAccount: e.target.value })} className={inputCls}>
                     {bankAccounts.map(b => (
                       <option key={b.id} value={b.name}>{b.name}</option>
@@ -806,7 +1002,7 @@ export default function HisabApp() {
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-amber-100">
                 <button type="button" onClick={() => { setIsModalOpen(false); setDetectedSms(''); }} className="px-4 py-2.5 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">Cancel</button>
-                <button type="submit" className="bg-amber-800 hover:bg-amber-900 text-amber-50 px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer">Surakshit Karein</button>
+                <button type="submit" className="bg-amber-800 hover:bg-amber-900 text-amber-50 px-5 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer">Save Entry</button>
               </div>
             </form>
             <div className="mt-4 pt-3 border-t border-amber-100 text-center text-amber-900/60 text-xs signature-font">
