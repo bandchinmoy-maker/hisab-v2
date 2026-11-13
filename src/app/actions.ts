@@ -1,6 +1,6 @@
 'use server'
 
-import prisma from '@/lib/db'
+import prisma from './lib/db'
 import { revalidatePath } from 'next/cache'
 
 // Saari transactions fetch karne ke liye
@@ -16,31 +16,63 @@ export async function getTransactions() {
   }
 }
 
-// Nayi transaction add karne ke liye
-export async function addTransaction(formData: {
+// Nayi transaction ya edit karne ke liye
+export async function saveTransaction(formData: {
+  id?: string
   text: string
   amount: number
+  amountINR: number
   type: string
   category: string
   paymentMode: string
+  bankAccount: string
+  country: string
+  currency: string
+  symbol: string
   date: string
 }) {
   try {
-    const newTransaction = await prisma.transaction.create({
-      data: {
-        text: formData.text,
-        amount: formData.amount,
-        type: formData.type,
-        category: formData.category,
-        paymentMode: formData.paymentMode,
-        date: formData.date,
-      },
-    })
-    
-    revalidatePath('/') // Page ko refresh karega taaki naya data turant dikhe
-    return { success: true, data: newTransaction }
+    let result
+    if (formData.id) {
+      // Update existing transaction
+      result = await prisma.transaction.update({
+        where: { id: formData.id },
+        data: {
+          text: formData.text,
+          amount: formData.amount,
+          amountINR: formData.amountINR,
+          type: formData.type,
+          category: formData.category,
+          paymentMode: formData.paymentMode,
+          bankAccount: formData.bankAccount,
+          country: formData.country,
+          currency: formData.currency,
+          symbol: formData.symbol,
+        },
+      })
+    } else {
+      // Create new transaction
+      result = await prisma.transaction.create({
+        data: {
+          text: formData.text,
+          amount: formData.amount,
+          amountINR: formData.amountINR,
+          type: formData.type,
+          category: formData.category,
+          paymentMode: formData.paymentMode,
+          bankAccount: formData.bankAccount,
+          country: formData.country,
+          currency: formData.currency,
+          symbol: formData.symbol,
+          date: formData.date,
+        },
+      })
+    }
+
+    revalidatePath('/')
+    return { success: true, data: result }
   } catch (error) {
-    console.error('Failed to add transaction:', error)
+    console.error('Failed to save transaction:', error)
     return { success: false, error: 'Transaction save nahi ho payi' }
   }
 }
@@ -51,7 +83,7 @@ export async function deleteTransaction(id: string) {
     await prisma.transaction.delete({
       where: { id },
     })
-    
+
     revalidatePath('/')
     return { success: true }
   } catch (error) {
