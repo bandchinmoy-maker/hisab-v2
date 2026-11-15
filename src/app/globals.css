@@ -2,20 +2,22 @@
 
 @layer base {
   :root {
-    --background: #F7F3EE;
-    --foreground: #2C241D;
+    --bg-cream: #F4EEDC;
+    --text-dark: #1E2923;
+    --accent-green: #1B3B22;
+    --accent-orange: #E05A38;
   }
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #F4EEDC;
+  color: #1E2923;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom smooth scroll and accents */
+/* Custom smooth selection */
 ::selection {
-  background-color: #D97706;
+  background-color: #E05A38;
   color: #ffffff;
 }
