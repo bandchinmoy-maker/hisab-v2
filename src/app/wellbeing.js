@@ -2,31 +2,45 @@
 
 import React, { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { MOODS, LENSES, TOPIC_CHIPS, THOUGHTS } from './content'
+import { useLang } from './i18n'
+import { getContent } from './content'
 import { saveCheckIn, getCheckIns, saveReflection, getReflections, deleteAllJournalData } from './journal'
 
-const card = 'bg-white rounded-2xl border border-amber-200 shadow-sm p-6'
-const btn = 'bg-amber-800 hover:bg-amber-900 disabled:opacity-50 text-white font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer transition'
-const ghost = 'bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer transition'
-const field = 'w-full border border-amber-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white'
+const card = 'bg-white rounded-2xl border border-[#E3D9B5] shadow-sm p-6'
+const btn = 'bg-[#1B3B22] hover:bg-[#14301a] disabled:opacity-50 text-[#F4EEDC] font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer transition'
+const ghost = 'bg-[#E3D9B5]/40 hover:bg-[#E3D9B5]/70 text-[#1E2923] font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer transition'
+const field = 'w-full border border-[#E3D9B5] rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#1B3B22] bg-white'
+const heading = 'text-xl font-black font-serif text-[#1B3B22]'
 const dayKey = (d) => { const x = new Date(d); return `${x.getFullYear()}-${x.getMonth() + 1}-${x.getDate()}` }
-const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
 
 export function SafetyNote() {
+  const { t } = useLang()
+  return <p className="text-xs text-[#4A5D50]">{t('safety')}</p>
+}
+
+function MoodPicker({ value, onChange, moods, big = false }) {
   return (
-    <p className="text-xs text-slate-500">
-      Arthveda reflection ka ek saadhan hai, therapy ya medical salah nahi. Agar aap khud ko unsafe ya crisis mein mehsoos karein, to apne shehar ki emergency service ya kisi helpline se turant sampark karein. India mein Tele-MANAS: 14416 (kripya check karein ki number abhi bhi sahi hai).
-    </p>
+    <div className="flex gap-2 flex-wrap">
+      {moods.map((m) => (
+        <button key={m.v} type="button" onClick={() => onChange(m.v)} className={`flex-1 min-w-[56px] ${big ? 'py-3' : 'py-2'} rounded-xl border text-center cursor-pointer ${value === m.v ? 'border-[#1B3B22] bg-[#1B3B22]/10' : 'border-[#E3D9B5] bg-white hover:bg-[#F4EEDC]'}`}>
+          <div className={big ? 'text-2xl' : 'text-xl'}>{m.e}</div>
+          <div className="text-[10px] font-bold text-[#4A5D50] mt-0.5">{m.l}</div>
+        </button>
+      ))}
+    </div>
   )
 }
 
 export function TodayView({ onReflect }) {
   const { user } = useUser()
+  const { t, lang } = useLang()
+  const C = getContent(lang)
   const [mood, setMood] = useState(null)
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(null)
-  const thought = THOUGHTS[new Date().getDay() % THOUGHTS.length]
+  const [lastNote, setLastNote] = useState('')
+  const thought = C.THOUGHTS[new Date().getDay() % C.THOUGHTS.length]
 
   const submit = async () => {
     if (!mood || saving) return
@@ -35,41 +49,36 @@ export function TodayView({ onReflect }) {
       const res = await saveCheckIn({ mood, note })
       if (!res.success) throw new Error(res.error)
       setDone(mood)
+      setLastNote(note)
       setNote('')
     } catch (err) {
       console.error(err)
-      alert('Save nahi ho paya. Kripya dobara try karein.')
+      alert(t('saveFail'))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="space-y-6 mb-8 max-w-3xl">
+    <div className="space-y-6 mb-8">
       <div className={card}>
-        <h2 className="text-xl font-black text-amber-900">Namaste{user && user.firstName ? `, ${user.firstName}` : ''} 🙏</h2>
-        <p className="text-sm text-slate-600 mt-1">Abhi aapka mann kaisa hai?</p>
-        <div className="flex gap-2 mt-4 flex-wrap">
-          {MOODS.map((m) => (
-            <button key={m.v} onClick={() => setMood(m.v)} className={`flex-1 min-w-[64px] py-3 rounded-xl border text-center cursor-pointer ${mood === m.v ? 'border-amber-700 bg-amber-100' : 'border-amber-200 bg-white hover:bg-amber-50'}`}>
-              <div className="text-2xl">{m.e}</div>
-              <div className="text-[11px] font-bold text-slate-600 mt-1">{m.l}</div>
-            </button>
-          ))}
-        </div>
-        <input type="text" maxLength={280} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ek line likhein (zaroori nahi)" className={field + ' mt-4'} />
-        <button onClick={submit} disabled={!mood || saving} className={btn + ' mt-4'}>{saving ? 'Saving...' : 'Check-in save karein'}</button>
+        <h2 className={heading}>{t('hello')}{user && user.firstName ? `, ${user.firstName}` : ''} 🙏</h2>
+        <p className="text-sm text-[#4A5D50] mt-1">{t('moodQ')}</p>
+        <div className="mt-4"><MoodPicker value={mood} onChange={setMood} moods={C.MOODS} big /></div>
+        <input type="text" maxLength={280} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('notePh')} className={field + ' mt-4'} />
+        <button onClick={submit} disabled={!mood || saving} className={btn + ' mt-4'}>{saving ? t('saving') : t('saveCheck')}</button>
         {done && (
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-900">
-            Check-in save ho gaya ✔
-            {done <= 2 && <span className="block mt-1">Aaj bhaari din lag raha hai. Kisi apne se baat karna madad kar sakta hai. Zarurat ho to helpline ya doctor se sampark karein.</span>}
+          <div className="mt-4 bg-[#1B3B22]/5 border border-[#1B3B22]/20 rounded-xl p-3 text-sm text-[#1B3B22]">
+            {t('checkSaved')}
+            {done <= 2 && <span className="block mt-1">{t('lowMsg')}</span>}
+            <button onClick={() => onReflect(lastNote)} className={ghost + ' mt-3 block'}>{t('reflectNow')}</button>
           </div>
         )}
       </div>
       <div className={card}>
-        <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">Aaj ka vichaar</p>
-        <p className="text-lg font-bold text-slate-800 mt-2">{thought}</p>
-        <button onClick={() => onReflect(thought)} className={ghost + ' mt-4'}>🧭 Is par soch kar dekhein</button>
+        <p className="text-xs font-bold text-[#E05A38] uppercase tracking-wider">{t('thoughtLbl')}</p>
+        <p className="text-lg font-bold text-[#1E2923] mt-2">{thought}</p>
+        <button onClick={() => onReflect(thought)} className={ghost + ' mt-4'}>{t('thinkOn')}</button>
       </div>
       <SafetyNote />
     </div>
@@ -77,14 +86,18 @@ export function TodayView({ onReflect }) {
 }
 
 export function ReflectView({ startTopic }) {
+  const { t, lang } = useLang()
+  const C = getContent(lang)
   const [step, setStep] = useState(1)
   const [topic, setTopic] = useState(startTopic || '')
   const [lensId, setLensId] = useState(null)
   const [answers, setAnswers] = useState([])
+  const [moodBefore, setMoodBefore] = useState(null)
+  const [moodAfter, setMoodAfter] = useState(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [past, setPast] = useState([])
-  const lens = LENSES.find((l) => l.id === lensId)
+  const lens = C.LENSES.find((l) => l.id === lensId)
 
   const loadPast = async () => {
     try {
@@ -102,82 +115,94 @@ export function ReflectView({ startTopic }) {
     if (saving) return
     setSaving(true)
     try {
-      const res = await saveReflection({ topic, lens: lensId, answers })
+      const res = await saveReflection({ topic, lens: lensId, answers, moodBefore, moodAfter })
       if (!res.success) throw new Error(res.error)
       setSaved(true)
       loadPast()
     } catch (err) {
       console.error(err)
-      alert('Save nahi ho paya. Kripya dobara try karein.')
+      alert(t('saveFail'))
     } finally {
       setSaving(false)
     }
   }
 
-  const restart = () => { setStep(1); setTopic(''); setLensId(null); setAnswers([]); setSaved(false) }
+  const restart = () => { setStep(1); setTopic(''); setLensId(null); setAnswers([]); setMoodBefore(null); setMoodAfter(null); setSaved(false) }
+  const face = (v) => (C.MOODS.find((m) => m.v === v) || {}).e
 
   return (
-    <div className="space-y-6 mb-8 max-w-3xl">
+    <div className="space-y-6 mb-8">
       {step === 1 && (
         <div className={card}>
-          <h2 className="text-xl font-black text-amber-900">Aaj aapko kya pareshan kar raha hai?</h2>
+          <h2 className={heading}>{t('topicQ')}</h2>
           <div className="flex flex-wrap gap-2 mt-4">
-            {TOPIC_CHIPS.map((c) => (
-              <button key={c} onClick={() => setTopic(c)} className={`px-3 py-2 rounded-full text-xs font-bold border cursor-pointer ${topic === c ? 'bg-amber-800 text-white border-amber-800' : 'bg-white border-amber-200 text-slate-700 hover:bg-amber-50'}`}>{c}</button>
+            {C.TOPIC_CHIPS.map((c) => (
+              <button key={c} onClick={() => setTopic(c)} className={`px-3 py-2 rounded-full text-xs font-bold border cursor-pointer ${topic === c ? 'bg-[#1B3B22] text-[#F4EEDC] border-[#1B3B22]' : 'bg-white border-[#E3D9B5] text-[#1E2923] hover:bg-[#F4EEDC]'}`}>{c}</button>
             ))}
           </div>
-          <textarea rows={3} maxLength={300} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder="Ya apne shabdon mein likhein..." className={field + ' mt-4'}></textarea>
-          <button onClick={() => setStep(2)} disabled={!topic.trim()} className={btn + ' mt-4'}>Aage badhein →</button>
+          <textarea rows={3} maxLength={300} value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={t('topicPh')} className={field + ' mt-4'}></textarea>
+          <button onClick={() => setStep(2)} disabled={!topic.trim()} className={btn + ' mt-4'}>{t('next')}</button>
         </div>
       )}
       {step === 2 && (
         <div className={card}>
-          <h2 className="text-xl font-black text-amber-900">Kis nazariye se dekhna chahenge?</h2>
-          <p className="text-sm text-slate-600 mt-1">“{topic}”</p>
+          <h2 className={heading}>{t('lensQ')}</h2>
+          <p className="text-sm text-[#4A5D50] mt-1">“{topic}”</p>
           <div className="grid gap-3 mt-4">
-            {LENSES.map((l) => (
-              <button key={l.id} onClick={() => pickLens(l)} className="text-left border border-amber-200 hover:bg-amber-50 rounded-xl p-4 cursor-pointer">
-                <p className="font-bold text-slate-800">{l.name}</p>
-                <p className="text-xs text-slate-500 mt-1">{l.tagline}</p>
+            {C.LENSES.map((l) => (
+              <button key={l.id} onClick={() => pickLens(l)} className="text-left border border-[#E3D9B5] hover:bg-[#F4EEDC] rounded-xl p-4 cursor-pointer">
+                <p className="font-bold text-[#1E2923]">{l.name}</p>
+                <p className="text-xs text-[#4A5D50] mt-1">{l.tagline}</p>
               </button>
             ))}
           </div>
-          <button onClick={() => setStep(1)} className={ghost + ' mt-4'}>← Wapas</button>
+          <button onClick={() => setStep(1)} className={ghost + ' mt-4'}>{t('back')}</button>
         </div>
       )}
       {step === 3 && lens && (
         <div className={card}>
-          <p className="text-xs font-bold text-amber-700 uppercase tracking-wider">{lens.name}</p>
-          <h2 className="text-lg font-black text-slate-800 mt-1">“{topic}”</h2>
-          <div className="space-y-4 mt-4">
+          <p className="text-xs font-bold text-[#E05A38] uppercase tracking-wider">{lens.name}</p>
+          <h2 className="text-lg font-black font-serif text-[#1B3B22] mt-1">“{topic}”</h2>
+          <div className="mt-4">
+            <p className="text-sm font-bold text-[#1E2923] mb-2">{t('moodBefore')}</p>
+            <MoodPicker value={moodBefore} onChange={setMoodBefore} moods={C.MOODS} />
+          </div>
+          <div className="space-y-4 mt-5">
             {lens.questions.map((q, i) => (
               <div key={i}>
-                <label className="block text-sm font-bold text-slate-700 mb-1">{i + 1}. {q}</label>
+                <label className="block text-sm font-bold text-[#1E2923] mb-1">{i + 1}. {q}</label>
                 <textarea rows={2} maxLength={1000} value={answers[i] || ''} onChange={(e) => setAnswers(answers.map((a, j) => (j === i ? e.target.value : a)))} className={field}></textarea>
               </div>
             ))}
           </div>
+          <div className="mt-5">
+            <p className="text-sm font-bold text-[#1E2923] mb-2">{t('moodAfter')}</p>
+            <MoodPicker value={moodAfter} onChange={setMoodAfter} moods={C.MOODS} />
+          </div>
           {saved ? (
-            <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-sm text-emerald-900">
-              Reflection save ho gaya ✔ Aaj ka ek chhota kadam zaroor uthayein.
-              <button onClick={restart} className={ghost + ' mt-3 block'}>Nayi reflection</button>
+            <div className="mt-4 bg-[#1B3B22]/5 border border-[#1B3B22]/20 rounded-xl p-3 text-sm text-[#1B3B22]">
+              {t('reflSaved')}
+              <button onClick={restart} className={ghost + ' mt-3 block'}>{t('newRefl')}</button>
             </div>
           ) : (
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => setStep(2)} className={ghost}>← Wapas</button>
-              <button onClick={save} disabled={saving} className={btn}>{saving ? 'Saving...' : 'Save karein'}</button>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setStep(2)} className={ghost}>{t('back')}</button>
+              <button onClick={save} disabled={saving} className={btn}>{saving ? t('saving') : t('saveRefl')}</button>
             </div>
           )}
         </div>
       )}
       {past.length > 0 && (
         <div className={card}>
-          <h3 className="font-bold text-amber-900 mb-3">Pichli reflections</h3>
+          <h3 className="font-bold font-serif text-[#1B3B22] mb-3">{t('pastRefl')}</h3>
           <div className="space-y-2">
             {past.map((r) => (
-              <details key={r.id} className="border border-amber-100 rounded-xl p-3">
-                <summary className="text-sm font-bold text-slate-700 cursor-pointer">{fmtDate(r.createdAt)} · {r.topic}</summary>
-                <ul className="mt-2 space-y-1 text-sm text-slate-600 list-disc pl-5">
+              <details key={r.id} className="border border-[#E3D9B5] rounded-xl p-3">
+                <summary className="text-sm font-bold text-[#1E2923] cursor-pointer">
+                  {new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} · {r.topic}
+                  {r.moodBefore && r.moodAfter ? ` · ${face(r.moodBefore)}→${face(r.moodAfter)}` : ''}
+                </summary>
+                <ul className="mt-2 space-y-1 text-sm text-[#4A5D50] list-disc pl-5">
                   {r.answers.filter(Boolean).map((a, i) => <li key={i}>{a}</li>)}
                 </ul>
               </details>
@@ -191,9 +216,11 @@ export function ReflectView({ startTopic }) {
 }
 
 export function WeekView() {
+  const { t, lang } = useLang()
   const [checks, setChecks] = useState([])
   const [refl, setRefl] = useState([])
   const [loaded, setLoaded] = useState(false)
+  const locale = lang === 'hi' ? 'hi-IN' : 'en-IN'
 
   useEffect(() => {
     const load = async () => {
@@ -214,12 +241,13 @@ export function WeekView() {
     const key = dayKey(d)
     const list = checks.filter((c) => dayKey(c.createdAt) === key)
     const avg = list.length ? list.reduce((a, c) => a + c.mood, 0) / list.length : null
-    return { label: d.toLocaleDateString('en-IN', { weekday: 'short' }), full: d.toLocaleDateString('en-IN', { weekday: 'long' }), avg }
+    return { label: d.toLocaleDateString(locale, { weekday: 'short' }), full: d.toLocaleDateString(locale, { weekday: 'long' }), avg }
   })
   const withData = days.filter((d) => d.avg !== null)
   const lowest = withData.length > 1 ? withData.reduce((a, b) => (b.avg < a.avg ? b : a)) : null
-  const weekCut = Date.now() - 7 * 86400000
-  const weekRefl = refl.filter((r) => new Date(r.createdAt).getTime() >= weekCut).length
+  const weekRefl = refl.filter((r) => new Date(r.createdAt).getTime() >= Date.now() - 7 * 86400000).length
+  const both = refl.filter((r) => r.moodBefore && r.moodAfter && new Date(r.createdAt).getTime() >= Date.now() - 30 * 86400000)
+  const shift = both.length >= 3 ? both.reduce((a, r) => a + (r.moodAfter - r.moodBefore), 0) / both.length : null
 
   const exportData = async () => {
     const [c, r] = await Promise.all([getCheckIns(365), getReflections(500)])
@@ -231,37 +259,38 @@ export function WeekView() {
   }
 
   const wipe = async () => {
-    if (!window.confirm('Aapke saare check-ins aur reflections hamesha ke liye delete ho jayenge. Continue?')) return
+    if (!window.confirm(t('wipeConfirm'))) return
     const res = await deleteAllJournalData()
-    if (res.success) { setChecks([]); setRefl([]); alert('Delete ho gaya.') } else alert('Delete nahi ho paya.')
+    if (res.success) { setChecks([]); setRefl([]); alert(t('wipeDone')) } else alert(t('wipeFail'))
   }
 
   return (
-    <div className="space-y-6 mb-8 max-w-3xl">
+    <div className="space-y-6 mb-8">
       <div className={card}>
-        <h2 className="text-xl font-black text-amber-900">Is hafte ka mann</h2>
-        {!loaded ? <p className="text-sm text-slate-500 mt-3">Loading...</p> : (
+        <h2 className={heading}>{t('weekTitle')}</h2>
+        {!loaded ? <p className="text-sm text-[#4A5D50] mt-3">{t('loading')}</p> : (
           <>
             <div className="flex items-end gap-3 h-40 mt-4">
               {days.map((d, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center justify-end h-full">
-                  <div className="w-full bg-amber-500 rounded-t-lg transition-all" style={{ height: d.avg ? `${(d.avg / 5) * 100}%` : '4px', opacity: d.avg ? 1 : 0.25 }}></div>
-                  <span className="text-[11px] font-bold text-slate-500 mt-1">{d.label}</span>
+                  <div className="w-full bg-[#1B3B22] rounded-t-lg transition-all" style={{ height: d.avg ? `${(d.avg / 5) * 100}%` : '4px', opacity: d.avg ? 1 : 0.2 }}></div>
+                  <span className="text-[11px] font-bold text-[#4A5D50] mt-1">{d.label}</span>
                 </div>
               ))}
             </div>
-            <p className="text-sm text-slate-600 mt-4">{checks.length} check-ins aur {weekRefl} reflections is hafte.</p>
-            {lowest && <p className="text-sm text-slate-700 mt-2">Sabse bhaari din <b>{lowest.full}</b> raha. Us din kya alag tha?</p>}
-            {withData.length === 0 && <p className="text-sm text-slate-500 mt-2">Pehla check-in “Aaj” mein karein, phir yahan dikhega.</p>}
+            <p className="text-sm text-[#4A5D50] mt-4">{t('weekCounts', { c: checks.length, r: weekRefl })}</p>
+            {lowest && <p className="text-sm text-[#1E2923] mt-2">{t('lowestDay', { d: lowest.full })}</p>}
+            {shift !== null && <p className="text-sm text-[#1E2923] mt-2">{t('shift', { d: (shift > 0 ? '+' : '') + shift.toFixed(1) })}</p>}
+            {withData.length === 0 && <p className="text-sm text-[#4A5D50] mt-2">{t('weekEmpty')}</p>}
           </>
         )}
       </div>
       <div className={card}>
-        <h3 className="font-bold text-amber-900">Aapka data</h3>
-        <p className="text-xs text-slate-500 mt-1">Aapke check-ins aur reflections sirf aapke account se jude hain. Aap kabhi bhi unhe download ya hamesha ke liye delete kar sakte hain.</p>
+        <h3 className="font-bold font-serif text-[#1B3B22]">{t('dataTitle')}</h3>
+        <p className="text-xs text-[#4A5D50] mt-1">{t('dataDesc')}</p>
         <div className="flex gap-3 mt-3 flex-wrap">
-          <button onClick={exportData} className={ghost}>⬇ Mera data download</button>
-          <button onClick={wipe} className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer">🗑 Sab delete karein</button>
+          <button onClick={exportData} className={ghost}>{t('download')}</button>
+          <button onClick={wipe} className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-sm px-5 py-2.5 rounded-xl cursor-pointer">{t('wipe')}</button>
         </div>
       </div>
       <SafetyNote />

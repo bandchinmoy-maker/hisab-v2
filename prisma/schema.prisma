@@ -7,6 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Kept so the old ledger table (and its data) is NOT deleted when you run db push.
+model Transaction {
+  id          String   @id @default(cuid())
+  text        String
+  amount      Float
+  amountINR   Float?
+  type        String
+  category    String
+  paymentMode String
+  bankAccount String   @default("Main Cash Drawer")
+  country     String   @default("India")
+  currency    String   @default("INR")
+  symbol      String   @default("₹")
+  date        String
+  createdAt   DateTime @default(now())
+  userId      String   @default("")
+
+  @@index([userId])
+}
+
 model CheckIn {
   id        String   @id @default(cuid())
   userId    String   // Clerk User ID for multi-user data isolation
@@ -23,7 +43,9 @@ model Reflection {
   userId    String   // Clerk User ID for multi-user data isolation
   topic     String   // The core challenge or topic chosen
   lens      String   // The philosophical lens used (e.g. 'gita', 'stoic', etc.)
-  answers   String   // JSON string of answers array (Fixed for Claude's journal.ts)
+  answers   String   // JSON string of the answers array
+  moodBefore Int?    // optional 1 to 5, before reflecting
+  moodAfter  Int?    // optional 1 to 5, after reflecting
   createdAt DateTime @default(now())
 
   @@index([userId])

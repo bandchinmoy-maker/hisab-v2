@@ -45,14 +45,15 @@ export async function getCheckIns(days = 7) {
   }
 }
 
-export async function saveReflection(input: { topic: string; lens: string; answers: string[] }) {
+export async function saveReflection(input: { topic: string; lens: string; answers: string[]; moodBefore?: number | null; moodAfter?: number | null }) {
   try {
     const userId = await currentUserId()
     if (!userId) return { success: false, error: 'Please log in' }
     if (!LENS_IDS.includes(input.lens)) return { success: false, error: 'Invalid lens' }
     const answers = (Array.isArray(input.answers) ? input.answers : []).slice(0, 6).map((a) => String(a).slice(0, 1000))
+    const m = (v?: number | null) => { const n = Math.round(Number(v)); return n >= 1 && n <= 5 ? n : null }
     await prisma.reflection.create({
-      data: { userId, topic: String(input.topic || '').slice(0, 300), lens: input.lens, answers: JSON.stringify(answers) },
+      data: { userId, topic: String(input.topic || '').slice(0, 300), lens: input.lens, answers: JSON.stringify(answers), moodBefore: m(input.moodBefore), moodAfter: m(input.moodAfter) },
     })
     return { success: true }
   } catch (error) {
@@ -77,6 +78,8 @@ export async function getReflections(limit = 20) {
         topic: r.topic,
         lens: r.lens,
         answers: JSON.parse(r.answers || '[]') as string[],
+        moodBefore: r.moodBefore,
+        moodAfter: r.moodAfter,
         createdAt: r.createdAt.toISOString(),
       })),
     }
