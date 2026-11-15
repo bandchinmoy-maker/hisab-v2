@@ -23,7 +23,7 @@ model Reflection {
   userId    String   // Clerk User ID for multi-user data isolation
   topic     String   // The core challenge or topic chosen
   lens      String   // The philosophical lens used (e.g. 'gita', 'stoic', etc.)
-  answers   String[] // Array of user answers to lens questions
+  answers   String   // JSON string of answers array (Fixed for Claude's journal.ts)
   createdAt DateTime @default(now())
 
   @@index([userId])
