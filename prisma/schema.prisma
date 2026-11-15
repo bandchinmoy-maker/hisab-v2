@@ -7,13 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Transaction {
-  id          String   @id @default(cuid())
-  text        String
-  amount      Float
-  type        String
-  category    String
-  paymentMode String
-  date        String
-  createdAt   DateTime @default(now())
+model CheckIn {
+  id        String   @id @default(cuid())
+  userId    String   // Clerk User ID for multi-user data isolation
+  mood      Int      // 1 to 5 mood scale
+  note      String?  // Optional short note (max 280 chars)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Reflection {
+  id        String   @id @default(cuid())
+  userId    String   // Clerk User ID for multi-user data isolation
+  topic     String   // The core challenge or topic chosen
+  lens      String   // The philosophical lens used (e.g. 'gita', 'stoic', etc.)
+  answers   String[] // Array of user answers to lens questions
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
